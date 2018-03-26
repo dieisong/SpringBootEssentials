@@ -1,29 +1,43 @@
 package br.com.testespring.endpoint;
 
+import br.com.testespring.error.CustomErrorType;
 import br.com.testespring.model.Student;
 import br.com.testespring.util.DateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import static java.util.Arrays.asList;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @RestController
 @ResponseBody //todo os metodos vão retornar json no corpo da requisição
-@RequestMapping("student")
+@RequestMapping("students")
 public class StudentEndPoint {
 
-    @Autowired
-    private DateUtil dateUtil;
+    private final DateUtil dateUtil;
 
-    @RequestMapping(method = RequestMethod.GET, path="/list")
-    public List<Student> listAll(){
-        System.out.println("######################### - "+dateUtil.formatLocalDateTimeToDatabaseStyle(LocalDateTime.now()));
-        return asList(new Student("Maria"), new Student("João"));
+    @Autowired
+    public StudentEndPoint(DateUtil dateUtil) {
+        this.dateUtil = dateUtil;
     }
+
+    @RequestMapping(method = RequestMethod.GET) //, path="/list"
+    public ResponseEntity<?> listAll(){
+        System.out.println("######################### - "+dateUtil.formatLocalDateTimeToDatabaseStyle(LocalDateTime.now()));
+        return new ResponseEntity<>(Student.studentList, HttpStatus.OK);
+    }
+
+    @RequestMapping(method = RequestMethod.GET, path="/{id}")
+    public ResponseEntity<?> getStudentById(@PathVariable("id") int id){
+        Student student = new Student();
+        student.setId(id);
+        int index = Student.studentList.indexOf(student);
+        if(index == -1) {
+            return new ResponseEntity<>(new CustomErrorType("Student not found"), HttpStatus.NOT_FOUND) ;
+        } else {
+            return new ResponseEntity<>(Student.studentList.get(index), HttpStatus.OK);
+        }
+    }
+
 }
